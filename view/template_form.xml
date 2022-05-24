@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<!-- The COPYRIGHT file at the top level of this repository contains the full
+     copyright notices and license terms. -->
+<data>
+    <xpath expr="/form/notebook/page[@id='general']/group[@id='checkboxes']"
+        position="inside">
+        <label name="bulk_type"/>
+        <field name="bulk_type" xexpand="0" width="25"/>
+    </xpath>
+</data>

@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!-- This file is part of Tryton.  The COPYRIGHT file at the top level of
+this repository contains the full copyright notices and license terms. -->
+
+<data>
+    <xpath expr="/form/group[@id='pass_features']" position="inside">
+        <label name="packaging"/>
+        <field name="packaging"/>
+        <label name="labeling"/>
+        <field name="labeling"/>
+    </xpath>
+
+    <xpath expr="/form/group[@id='quantities']" position="inside">
+        <label name="product_packaging"/>
+        <field name="product_packaging"/>
+
+    </xpath>
+</data>
