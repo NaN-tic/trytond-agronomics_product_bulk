@@ -50,9 +50,9 @@ class ProductProductPackaging(ModelSQL, ModelView):
             },
             domain=[
              ['OR', ('packaging', '=', True), ('labeling', '=', True)],
-       #      ('inputs.template.products', 'in', Eval('product')),
+             ('inputs_products', 'in', Eval('product')),
             ],
-        #    depends=['inputs', 'inputs.template']
+            depends=['inputs_products']
         )
     product = fields.Many2One('product.product', 'Product', required=True)
     packaged_product = fields.Many2One('product.template', 'Packaged Product',
