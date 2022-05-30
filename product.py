@@ -75,6 +75,7 @@ class Template(metaclass=PoolMeta):
     bulk_quantity = fields.Function(fields.Float('Bulk Quantity',
         help="The amount of bulk stock in the location."),
         'sum_product')
+    packaging = fields.Boolean('Packaging')
 
     @classmethod
     def __setup__(cls):
@@ -112,12 +113,8 @@ class Product(metaclass=PoolMeta):
     bulk_quantity = fields.Function(fields.Float('Bulk Quantity',
         help="The amount of bulk stock in the location."),
         'get_bulk_quantity', searcher='search_bulk_quantity')
-    packaging = fields.Boolean('Packaging')
     packaging_products = fields.One2Many('product.product-product.packaging',
-        'product', 'Packaging Products',
-        states = {
-            'readonly': (~Eval('active', True) | Eval('bulk_type') != True),
-            })
+        'product', 'Packaging Products')
     capacity_pkg = fields.Float('Capacity', digits=(16, Eval('capacity_digits',
         2)), states={
             'invisible': Eval('type').in_(NON_MEASURABLE),
@@ -234,20 +231,12 @@ class Product(metaclass=PoolMeta):
                     weight = product.weight
                     pack_product = product
 
-                output_template = Template()
-                output_template.name = new_name
-                output_template.producible = True
-                output_template.salable = True
-                output_template.sale_uom = uom_unit
-                output_template.default_uom = uom_unit
-                output_template.list_price = Decimal(0)
-                output_template.weight = weight
-                output_template.weight_uom = uom_kg
-                output_template.type = product.type
-                output_template.account_category = product.account_category
-                output_template.categories = product.categories
+                if not production_template.outputs:
+                    continue
+
+                template = production_template.outputs[0]
                 output_product = Product()
-                output_product.template = output_template
+                output_product.template = template
                 output_product.capacity_pkg = capacity
                 output_product.netweight = netweight
                 output_product.netweight_uom = uom_kg
@@ -266,8 +255,7 @@ class Product(metaclass=PoolMeta):
                 output_product.varieties=varieties
                 output_product.save()
 
-
-                package_product.packaged_product = output_template
+                package_product.packaged_product = template
                 output_to_save.append(package_product)
 
                 bom = Bom(name=new_name)
@@ -275,8 +263,8 @@ class Product(metaclass=PoolMeta):
                     bom=bom,
                     product=product,
                     uom=product.default_uom,
-                    quantity=1.0)
-                inputs.append(bulk_input)
+                    quantity=pack_product.capacity_pkg)
+                inputs = [bulk_input]
                 package_input = BOMInput(
                     bom=bom,
                     product=pack_product,
@@ -331,16 +319,30 @@ class Product(metaclass=PoolMeta):
             location_ids = [x.storage_location.id for x in locations
                             if x.storage_location]
 
-        output_products = Product.search([
-                            ('bulk_product', 'in', products)
-                            ])
+        output_products = []
+        for prod in products:
+            if prod.bulk_type:
+                output_products.append(prod)
+                continue
+            if not prod.bulk_product:
+                continue
+            output_products.append(prod.bulk_product)
+
+
+        output_products += Product.search([
+                ('bulk_product', 'in', output_products)
+                ])
         output_products_ids = [x.id for x in output_products]
 
-        products_ids += [x.id for x in products]
+        products_ids += [x.id for x in output_products]
+        for product in output_products:
+            print(product.id, product.code, product.template.name,
+                product.bulk_type, product.bulk_product)
 
         with Transaction().set_context(locations=location_ids,
                     stock_date_end=today,
-                    _check_access=False):
+                    with_childs=True,
+                    check_access=False):
 
             bulk_quantity = cls._get_quantity(output_products, 'quantity',
                 location_ids, grouping=('product',),
@@ -349,9 +351,18 @@ class Product(metaclass=PoolMeta):
                 grouping=('product',) , grouping_filter=(products_ids,))
 
         res.update(quantity)
-        for product in output_products:
-            res[product.bulk_product.id] += (bulk_quantity.get(product.id,0)
-                * product.netweight if product.netweight else 0.0)
+        for product in products:
+            res[product.id] += (bulk_quantity.get(product.bulk_product and
+                product.bulk_product.id,0)
+                * (product.netweight if product.netweight else 1))
+
+        if product.bulk_type:
+            for product in output_products:
+                if product.bulk_type:
+                    continue
+                res[product.bulk_product.id] += (bulk_quantity.get(product.id ,0)
+                    * (product.netweight if product.netweight else 1))
+
         return res
 
     @classmethod
@@ -376,3 +387,4 @@ class Product(metaclass=PoolMeta):
             if rows:
                 return rows
         return False
+

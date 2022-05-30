@@ -10,11 +10,6 @@
         <field name="bulk_quantity"/>
         <newline/>
     </xpath>
-    <xpath expr="/form/notebook/page[@id='general']/group[@id='checkboxes']"
-        position="inside">
-        <label name="packaging"/>
-        <field name="packaging" xexpand="0" width="25"/>
-    </xpath>
     <xpath expr="/form/notebook/page[@id='measurements']" position="inside">
         <label name="netweight"/>
         <field name="netweight"/>
