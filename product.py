@@ -55,7 +55,7 @@ class ProductProductPackaging(ModelSQL, ModelView):
             depends=['product']
         )
     product = fields.Many2One('product.product', 'Product', required=True)
-    packaged_product = fields.Many2One('product.template', 'Packaged Product',
+    packaged_product = fields.Many2One('product.product', 'Packaged Product',
         states = {
             'readonly': True,
             },
@@ -154,8 +154,7 @@ class Product(metaclass=PoolMeta):
 
         cls._buttons.update({
                 'create_packaging_products': {
-                    'invisible': (~Eval('active', True)
-                        | Eval('bulk_type') != True)
+                    'invisible': ~Eval('active', True)
                 },
             })
 
@@ -255,7 +254,7 @@ class Product(metaclass=PoolMeta):
                 output_product.varieties=varieties
                 output_product.save()
 
-                package_product.packaged_product = template
+                package_product.packaged_product = output_product
                 output_to_save.append(package_product)
 
                 bom = Bom(name=new_name)
@@ -335,10 +334,6 @@ class Product(metaclass=PoolMeta):
         output_products_ids = [x.id for x in output_products]
 
         products_ids += [x.id for x in output_products]
-        for product in output_products:
-            print(product.id, product.code, product.template.name,
-                product.bulk_type, product.bulk_product)
-
         with Transaction().set_context(locations=location_ids,
                     stock_date_end=today,
                     with_childs=True,
@@ -354,14 +349,14 @@ class Product(metaclass=PoolMeta):
         for product in products:
             res[product.id] += (bulk_quantity.get(product.bulk_product and
                 product.bulk_product.id,0)
-                * (product.netweight if product.netweight else 1))
+                * (product.capacity_pkg if product.capacity_pkg else 1))
 
         if product.bulk_type:
             for product in output_products:
                 if product.bulk_type:
                     continue
                 res[product.bulk_product.id] += (bulk_quantity.get(product.id ,0)
-                    * (product.netweight if product.netweight else 1))
+                    * (product.capacity_pkg if product.capacity_pkg else 1))
 
         return res
 

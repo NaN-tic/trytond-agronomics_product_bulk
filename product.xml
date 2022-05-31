@@ -30,11 +30,6 @@
             <field name="res_model">product.product</field>
             <field name="domain" eval="[('bulk_product.id', '=', Eval('active_id'))]" pyson="1"/>
         </record>
-        <record model="ir.action.keyword" id="act_bulk_product_keyword_2">
-            <field name="keyword">form_relate</field>
-            <field name="model">product.product,-1</field>
-            <field name="action" ref="act_bulk_product_related_2"/>
-        </record>
 
         <record model="ir.model.button" id="create_packaging_products_button">
             <field name="name">create_packaging_products</field>
