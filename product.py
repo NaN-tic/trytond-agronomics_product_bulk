@@ -104,12 +104,9 @@ class Product(metaclass=PoolMeta):
     bulk_type = fields.Function(fields.Boolean('Bulk'), 'get_bulk',
         searcher='search_bulk_type')
     bulk_product = fields.Many2One('product.product', 'Bulk Product',
-        domain=[
-            ('template.bulk_type', '=', True),
-            ],
         states= {
-            'readonly': (~Eval('active', True) | Eval('bulk_type') == True),
-            }, depends=['bulk_type'])
+            'readonly': ~Eval('active', True),
+            }, depends=['active'])
     bulk_quantity = fields.Function(fields.Float('Bulk Quantity',
         help="The amount of bulk stock in the location."),
         'get_bulk_quantity', searcher='search_bulk_quantity')
@@ -319,44 +316,43 @@ class Product(metaclass=PoolMeta):
                             if x.storage_location]
 
         output_products = []
+        bulk_products = []
         for prod in products:
-            if prod.bulk_type:
-                output_products.append(prod)
+            if prod.bulk_type and not prod.bulk_product:
+                bulk_products.append(prod)
                 continue
-            if not prod.bulk_product:
-                continue
-            output_products.append(prod.bulk_product)
+            bulk_products.append(prod.bulk_product)
+            output_products.append(prod)
 
-
+        bulk_products_ids = [x.id for x in bulk_products]
         output_products += Product.search([
-                ('bulk_product', 'in', output_products)
+                ('bulk_product', 'in', bulk_products_ids)
                 ])
+        output_products = list(set(output_products))
         output_products_ids = [x.id for x in output_products]
-
         products_ids += [x.id for x in output_products]
         with Transaction().set_context(locations=location_ids,
                     stock_date_end=today,
                     with_childs=True,
                     check_access=False):
 
-            bulk_quantity = cls._get_quantity(output_products, 'quantity',
+            output_quantity = cls._get_quantity(output_products, 'quantity',
                 location_ids, grouping=('product',),
                 grouping_filter=(output_products_ids,))
-            quantity = cls._get_quantity(products, 'quantity', location_ids,
-                grouping=('product',) , grouping_filter=(products_ids,))
+            # quantity = cls._get_quantity(products, 'quantity', location_ids,
+            #     grouping=('product',) , grouping_filter=(products_ids,))
+            bulk_quantity = cls._get_quantity(bulk_products, 'quantity',
+                location_ids, grouping=('product',) ,
+                grouping_filter=(bulk_products_ids,))
 
-        res.update(quantity)
         for product in products:
-            res[product.id] += (bulk_quantity.get(product.bulk_product and
-                product.bulk_product.id,0)
-                * (product.capacity_pkg if product.capacity_pkg else 1))
-
-        if product.bulk_type:
-            for product in output_products:
-                if product.bulk_type:
+            prod = product.bulk_product if product.bulk_product else product
+            res[product.id] += bulk_quantity.get(prod.id ,0)
+            for output in output_products:
+                if output.bulk_product != prod:
                     continue
-                res[product.bulk_product.id] += (bulk_quantity.get(product.id ,0)
-                    * (product.capacity_pkg if product.capacity_pkg else 1))
+                res[product.id] += (output_quantity.get(output.id ,0)
+                        * (output.capacity_pkg if output.capacity_pkg else 1))
 
         return res
 
