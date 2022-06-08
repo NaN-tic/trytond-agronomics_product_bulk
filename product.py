@@ -206,10 +206,11 @@ class Product(metaclass=PoolMeta):
         product_to_save = []
         bom_to_save = []
         output_to_save = []
-        inputs = []
+
 
         for product in products:
             for package_product in product.packaging_products:
+                inputs = []
                 if package_product.packaged_product:
                     continue
                 production_template = package_product.production_template
@@ -225,7 +226,7 @@ class Product(metaclass=PoolMeta):
                     capacity = product.capacity
                     netweight = product.netweight
                     weight = product.weight
-                    pack_product = product
+                    pack_product = None
 
                 if not production_template.outputs:
                     continue
@@ -236,7 +237,8 @@ class Product(metaclass=PoolMeta):
                 output_product.capacity_pkg = capacity
                 output_product.netweight = netweight
                 output_product.netweight_uom = uom_kg
-                output_product.bulk_product = product.id
+                output_product.bulk_product = (product.bulk_product and
+                    product.bulk_product.id or product.id)
                 output_product.denominations_of_origin = list(
                     product.denominations_of_origin)
                 output_product.ecologicals = list(
@@ -254,19 +256,23 @@ class Product(metaclass=PoolMeta):
                 package_product.packaged_product = output_product
                 output_to_save.append(package_product)
 
+                quantity = 1
+                if pack_product:
+                    quantity = pack_product.capacity_pkg
                 bom = Bom(name=new_name)
                 bulk_input = BOMInput(
                     bom=bom,
                     product=product,
                     uom=product.default_uom,
-                    quantity=pack_product.capacity_pkg)
+                    quantity=quantity)
                 inputs = [bulk_input]
-                package_input = BOMInput(
-                    bom=bom,
-                    product=pack_product,
-                    uom=pack_product.default_uom,
-                    quantity=1.0)
-                inputs.append(package_input)
+                if pack_product:
+                    package_input = BOMInput(
+                        bom=bom,
+                        product=pack_product,
+                        uom=pack_product.default_uom,
+                        quantity=1.0)
+                    inputs.append(package_input)
 
                 for extra in  production_template.enology_products:
                     extra_input = BOMInput(
