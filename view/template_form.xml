@@ -8,6 +8,5 @@
         <field name="bulk_type" xexpand="0" width="25"/>
         <label name="packaging"/>
         <field name="packaging" xexpand="0" width="25"/>
-
     </xpath>
 </data>

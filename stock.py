@@ -16,7 +16,7 @@ class StockMove(metaclass=PoolMeta):
             },
         states=STATES, depends=DEPENDS + ['company'])
 
-    # TODO: check if is necessary
+
     @classmethod
     def create(cls, vlist):
         pool = Pool()

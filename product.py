@@ -1,6 +1,7 @@
 # The COPYRIGHT file at the top level of this repository contains the full
 # copyright notices and license terms.
 import functools
+import re
 from trytond.model import fields, ModelSQL, ModelView
 from trytond.pool import PoolMeta, Pool
 from trytond.pyson import Eval, Bool, Id, Or
@@ -16,9 +17,10 @@ def check_no_move(func):
 
     @functools.wraps(func)
     def decorator(cls, *args):
-        Product =  Pool().get('product.product')
-        Template =  Pool().get('product.template')
-        ProductPackage = Pool().get('product.product-product.packaging')
+        pool = Pool()
+        Product =  pool.get('product.product')
+        Template =  pool.get('product.template')
+        ProductPackage = pool.get('product.product-product.packaging')
 
         transaction = Transaction()
         if (transaction.user != 0 and transaction.context.get('_check_access')):
@@ -50,22 +52,18 @@ class ProductProductPackaging(ModelSQL, ModelView):
             },
             domain=[
              ['OR', ('packaging', '=', True), ('labeling', '=', True)],
-             ('inputs_products', 'in', Eval('product')),
+             ('inputs', 'in', Eval('product')),
             ],
-            depends=['product']
+            depends=['product', 'packaged_product']
         )
     product = fields.Many2One('product.product', 'Product', required=True)
     packaged_product = fields.Many2One('product.product', 'Packaged Product',
-        states = {
-            'readonly': True,
-            },
-        )
+        readonly=True)
 
     @classmethod
     @check_no_move
     def write(cls, *args):
         super().write(*args)
-
 
 
 class Template(metaclass=PoolMeta):
@@ -327,7 +325,8 @@ class Product(metaclass=PoolMeta):
             if prod.bulk_type and not prod.bulk_product:
                 bulk_products.append(prod)
                 continue
-            bulk_products.append(prod.bulk_product)
+            if prod.bulk_product:
+                bulk_products.append(prod.bulk_product)
             output_products.append(prod)
 
         bulk_products_ids = [x.id for x in bulk_products]
@@ -345,8 +344,6 @@ class Product(metaclass=PoolMeta):
             output_quantity = cls._get_quantity(output_products, 'quantity',
                 location_ids, grouping=('product',),
                 grouping_filter=(output_products_ids,))
-            # quantity = cls._get_quantity(products, 'quantity', location_ids,
-            #     grouping=('product',) , grouping_filter=(products_ids,))
             bulk_quantity = cls._get_quantity(bulk_products, 'quantity',
                 location_ids, grouping=('product',) ,
                 grouping_filter=(bulk_products_ids,))
