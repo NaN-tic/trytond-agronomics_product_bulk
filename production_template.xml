@@ -1,0 +1,10 @@
+<tryton>
+    <data>
+        <!-- Production Template -->
+        <record model="ir.ui.view" id="production_template_view_form">
+            <field name="model">production.template</field>
+            <field name="inherit" ref='agronomics.production_template_view_form'/>
+            <field name="name">production_template_form</field>
+        </record>
+    </data>
+</tryton>
