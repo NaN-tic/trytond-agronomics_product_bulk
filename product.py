@@ -52,7 +52,7 @@ class ProductProductPackaging(ModelSQL, ModelView):
             },
             domain=[
              ['OR', ('packaging', '=', True), ('labeling', '=', True)],
-             ('inputs', 'in', Eval('product')),
+             ('inputs_products', 'in', Eval('product')),
             ],
             depends=['product', 'packaged_product']
         )
