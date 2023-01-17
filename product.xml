@@ -45,7 +45,7 @@
 
         <record model="ir.action.act_window" id="act_product_bulk_stock">
             <field name="name">Bulk Products</field>
-            <field name="res_model">product.product</field>
+            <field name="res_model">product.template</field>
             <field name="domain" eval="[('bulk_type', '=', True)]" pyson="1"/>
         </record>
 
