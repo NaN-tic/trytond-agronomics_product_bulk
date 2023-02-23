@@ -21,7 +21,7 @@ class ProductionTemplate(metaclass=PoolMeta):
 
         cls.uom.states = {
             'invisible': Eval('packaging', -1) | Eval('labeling', -1),
-            'required': ~(Eval('packging', -1) | Eval('labeling', -1))
+            'required': ~(Eval('packaging', -1) | Eval('labeling', -1))
         }
         cls.uom.depends += ['packaging', 'labeling']
         cls.quantity.states = {
