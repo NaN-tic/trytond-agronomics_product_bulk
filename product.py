@@ -1,15 +1,13 @@
 # The COPYRIGHT file at the top level of this repository contains the full
 # copyright notices and license terms.
 import functools
-import re
 from trytond.model import fields, ModelSQL, ModelView
 from trytond.pool import PoolMeta, Pool
-from trytond.pyson import Eval, Bool, Id, Or
+from trytond.pyson import Eval, Bool, Id
 from trytond.transaction import Transaction
 from trytond.tools import grouped_slice
 from trytond.model.exceptions import AccessError
 from trytond.i18n import gettext
-from decimal import Decimal
 
 NON_MEASURABLE = ['service']
 
@@ -189,7 +187,6 @@ class Product(metaclass=PoolMeta):
     @classmethod
     @ModelView.button
     def create_packaging_products(cls, products):
-        Template = Pool().get('product.template')
         Product = Pool().get('product.product')
         Bom = Pool().get('production.bom')
         BOMInput = Pool().get('production.bom.input')
@@ -235,6 +232,8 @@ class Product(metaclass=PoolMeta):
                 output_product.capacity_pkg = capacity
                 output_product.netweight = netweight
                 output_product.netweight_uom = uom_kg
+                output_product.weight = weight
+                output_product.weight_uom = uom_kg
                 output_product.bulk_product = (product.bulk_product and
                     product.bulk_product.id or product.id)
                 output_product.denominations_of_origin = list(
