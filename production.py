@@ -1,6 +1,7 @@
 from trytond.pool import PoolMeta
 from trytond.model import fields
-from trytond.pyson import Eval, Bool,Or
+from trytond.pyson import Eval, Bool
+
 
 class ProductionTemplate(metaclass=PoolMeta):
     __name__ = 'production.template'
