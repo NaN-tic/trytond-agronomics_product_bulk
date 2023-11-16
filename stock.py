@@ -12,7 +12,7 @@ class StockMove(metaclass=PoolMeta):
     __name__ = 'stock.move'
 
     bulk_product = fields.Many2One('product.product', 'Bulk Product', context={
-            'company': Eval('company'),
+            'company': Eval('company', -1),
             },
         states=STATES, depends=DEPENDS + ['company'])
 
