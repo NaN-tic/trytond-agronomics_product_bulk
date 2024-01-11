@@ -12,9 +12,7 @@ class ProductionTemplate(metaclass=PoolMeta):
        states={
             'invisible': ~Bool(Eval('packaging', -1)),
         },
-        domain=[('packaging', '=', True)],
-        depends=['packaging']
-        )
+        domain=[('packaging', '=', True)])
 
     @classmethod
     def __setup__(cls):

@@ -51,9 +51,7 @@ class ProductProductPackaging(ModelSQL, ModelView):
             domain=[
              ['OR', ('packaging', '=', True), ('labeling', '=', True)],
              ('inputs_products', 'in', Eval('product')),
-            ],
-            depends=['product', 'packaged_product']
-        )
+            ])
     product = fields.Many2One('product.product', 'Product', required=True)
     packaged_product = fields.Many2One('product.product', 'Packaged Product',
         readonly=True)
@@ -111,30 +109,26 @@ class Product(metaclass=PoolMeta):
     capacity_pkg = fields.Float('Capacity', digits=(16, Eval('capacity_digits',
         2)), states={
             'invisible': Eval('type').in_(NON_MEASURABLE),
-            },
-        depends=['type', 'capacity_digits'])
+            })
     capacity_uom = fields.Many2One('product.uom', 'Capacity Uom',
         domain=[('symbol', '=', 'l')],
         states={
             'invisible': Eval('type').in_(NON_MEASURABLE),
             'required': Bool(Eval('capacity')),
-            },
-        depends=['type', 'capacity'])
+            })
     capacity_digits = fields.Function(fields.Integer('Capacity Digits'),
         'on_change_with_capacity_digits')
     netweight = fields.Float('Net Weight',
         digits=(16, Eval('netweight_digits', 2)),
         states={
             'invisible': Eval('type').in_(NON_MEASURABLE),
-            },
-        depends=['type', 'netweight_digits'])
+            })
     netweight_uom = fields.Many2One('product.uom', 'Net Weight Uom',
         domain=[('category', '=', Id('product', 'uom_cat_weight'))],
         states={
             'invisible': Eval('type').in_(NON_MEASURABLE),
             'required': Bool(Eval('netweight')),
-            },
-        depends=['type', 'netweight'])
+            })
     netweight_digits = fields.Function(fields.Integer('Net Weight Digits'),
         'on_change_with_netweight_digits')
 
