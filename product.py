@@ -97,10 +97,7 @@ class Product(metaclass=PoolMeta):
 
     bulk_type = fields.Function(fields.Boolean('Bulk'), 'get_bulk',
         searcher='search_bulk_type')
-    bulk_product = fields.Many2One('product.product', 'Bulk Product',
-        states= {
-            'readonly': ~Eval('active', True),
-            })
+    bulk_product = fields.Many2One('product.product', 'Bulk Product')
     bulk_quantity = fields.Function(fields.Float('Bulk Quantity',
         help="The amount of bulk stock in the location."),
         'get_bulk_quantity', searcher='search_bulk_quantity')
